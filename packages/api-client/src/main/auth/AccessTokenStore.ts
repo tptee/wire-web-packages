@@ -36,16 +36,21 @@ class AccessTokenStore extends EventEmitter {
   public async delete(): Promise<void> {
     this.logger.log('Deleting access token');
     this.accessToken = undefined;
-    return Promise.resolve();
   }
 
   public async updateToken(accessToken: AccessTokenData): Promise<AccessTokenData> {
     if (this.accessToken !== accessToken) {
       this.logger.log('Updating access token');
       this.accessToken = accessToken;
+
+      this.logger.info(`Saved updated access token. It will expire in "${accessToken.expires_in}" seconds.`, {
+        ...accessToken,
+        access_token: `${accessToken.access_token.substr(0, 10)}...`,
+      });
+
       this.emit(AccessTokenStore.TOPIC.ACCESS_TOKEN_REFRESH, this.accessToken);
     }
-    return Promise.resolve(this.accessToken);
+    return this.accessToken;
   }
 }
 

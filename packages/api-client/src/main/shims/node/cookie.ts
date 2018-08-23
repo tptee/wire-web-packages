@@ -20,14 +20,20 @@
 import {error as StoreEngineError} from '@wireapp/store-engine';
 import {CRUDEngine} from '@wireapp/store-engine/dist/commonjs/engine';
 import {AxiosPromise, AxiosRequestConfig, AxiosResponse} from 'axios';
+import * as logdown from 'logdown';
 import {Cookie as ToughCookie} from 'tough-cookie';
 import {AUTH_COOKIE_KEY, AUTH_TABLE_NAME, AccessTokenData, Cookie} from '../../auth';
 import {HttpClient} from '../../http';
 
 interface PersistedCookie {
-  expiration: string;
+  expiration: string | Date;
   zuid: string;
 }
+
+const logger = logdown('@wireapp/api-client/cookie', {
+  logger: console,
+  markdown: false,
+});
 
 const loadExistingCookie = (engine: CRUDEngine): Promise<Cookie> => {
   return engine
@@ -42,10 +48,8 @@ const loadExistingCookie = (engine: CRUDEngine): Promise<Cookie> => {
 
       throw error;
     })
-    .then((fileContent: PersistedCookie) => {
-      return typeof fileContent === 'object'
-        ? new Cookie(fileContent.zuid, fileContent.expiration)
-        : new Cookie('', '0');
+    .then(cookie => {
+      return typeof cookie === 'object' ? new Cookie(cookie.zuid, cookie.expiration) : new Cookie('', '0');
     });
 };
 
@@ -65,9 +69,15 @@ const setInternalCookie = (cookie: Cookie, engine: CRUDEngine): Promise<string> 
 
 export const retrieveCookie = async (response: AxiosResponse, engine: CRUDEngine): Promise<AccessTokenData> => {
   if (response.headers && response.headers['set-cookie']) {
-    const cookies = response.headers['set-cookie'].map(ToughCookie.parse);
-    for (const cookie of cookies) {
-      await setInternalCookie(new Cookie(cookie.value, cookie.expires), engine);
+    const cookies: string[] | string = response.headers['set-cookie'];
+    const parsedCookies =
+      cookies instanceof Array ? cookies.map(cookie => ToughCookie.parse(cookie)) : [ToughCookie.parse(cookies)];
+
+    for (const cookie of parsedCookies) {
+      if (cookie) {
+        await setInternalCookie(new Cookie(cookie.value, cookie.expires), engine);
+        logger.info(`Saved internal cookie. It will expire in "${cookie.expires}" seconds:`, cookie);
+      }
     }
   }
 

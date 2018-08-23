@@ -24,7 +24,7 @@ import * as EventEmitter from 'events';
 import * as logdown from 'logdown';
 import {AccessTokenData, AccessTokenStore, AuthAPI} from '../auth/';
 import {BackendErrorLabel, BackendErrorMapper, ConnectionState, ContentType, NetworkError, StatusCode} from '../http/';
-import {sendRequestWithCookie} from '../shims/node/cookie';
+import {retrieveCookie, sendRequestWithCookie} from '../shims/node/cookie';
 
 class HttpClient extends EventEmitter {
   private readonly logger = logdown('@wireapp/api-client/http/HttpClient', {
@@ -143,18 +143,21 @@ class HttpClient extends EventEmitter {
       });
   }
 
-  public refreshAccessToken(): Promise<AccessTokenData> {
+  public async refreshAccessToken(): Promise<AccessTokenData> {
     let expiredAccessToken: AccessTokenData | undefined;
     if (this.accessTokenStore.accessToken && this.accessTokenStore.accessToken.access_token) {
       expiredAccessToken = this.accessTokenStore.accessToken;
     }
 
-    return this.postAccess(expiredAccessToken).then((accessToken: AccessTokenData) =>
-      this.accessTokenStore.updateToken(accessToken)
-    );
+    const response = await this.postAccess(expiredAccessToken);
+    await retrieveCookie(response, this.engine);
+
+    const accessToken = response.data as AccessTokenData;
+
+    return this.accessTokenStore.updateToken(accessToken);
   }
 
-  public postAccess(expiredAccessToken?: AccessTokenData): Promise<AccessTokenData> {
+  public postAccess(expiredAccessToken?: AccessTokenData): Promise<AxiosResponse> {
     const config: AxiosRequestConfig = {
       headers: {},
       method: 'post',
@@ -168,7 +171,7 @@ class HttpClient extends EventEmitter {
       )}`;
     }
 
-    return sendRequestWithCookie(this, config, this.engine).then((response: AxiosResponse) => response.data);
+    return sendRequestWithCookie(this, config, this.engine);
   }
 
   public sendRequest(config: AxiosRequestConfig, tokenAsParam: boolean = false): AxiosPromise {

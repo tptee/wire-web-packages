@@ -155,7 +155,8 @@ class APIClient {
     let accessToken: AccessTokenData;
     return this.transport.http
       .postAccess()
-      .then((createdAccessToken: AccessTokenData) => {
+      .then(response => {
+        const createdAccessToken: AccessTokenData = response.data;
         context = this.createContext(createdAccessToken.user, clientType);
         accessToken = createdAccessToken;
       })

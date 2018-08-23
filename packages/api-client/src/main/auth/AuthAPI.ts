@@ -71,7 +71,7 @@ class AuthAPI {
     return this.client.sendJSON(config).then((response: AxiosResponse) => response.data);
   }
 
-  public postLogin(loginData: LoginData): Promise<AxiosResponse<any>> {
+  public postLogin(loginData: LoginData): Promise<AxiosResponse> {
     const login = {
       ...loginData,
       clientType: undefined,
@@ -88,7 +88,7 @@ class AuthAPI {
       withCredentials: true,
     };
 
-    return this.client.sendJSON(config).then((response: AxiosResponse) => response);
+    return this.client.sendJSON(config);
   }
 
   public postLogout(): AxiosPromise {

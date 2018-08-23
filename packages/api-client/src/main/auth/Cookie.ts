@@ -18,10 +18,7 @@
  */
 
 class Cookie {
-  public expiration = '0';
-  public zuid = '';
-
-  constructor(zuid: string, expiration: string) {
+  constructor(public zuid: string = '', public expiration: Date | string = '0') {
     this.expiration = expiration;
     this.zuid = zuid;
   }
