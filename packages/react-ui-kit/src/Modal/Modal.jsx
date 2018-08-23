@@ -84,7 +84,7 @@ const ModalBackground = styled(OverlayBackground)`
 const noop = () => {};
 
 const Modal = ({children, fullscreen, onClose, onBackgroundClick, ...props}) => (
-  <OverlayWrapper {...props} data-uie-name="modal">
+  <OverlayWrapper {...props}>
     <ModalBody fullscreen={fullscreen}>
       <ModalContent>{children}</ModalContent>
       {onClose !== noop && <ModalClose onClick={onClose} data-uie-name="do-close" />}
