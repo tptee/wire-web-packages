@@ -66,16 +66,19 @@ const rotationOffset = -0.75;
 const rotationDelay = `${parseFloat(DURATION.EXTRA_LONG) * rotationOffset}s`;
 
 const Loading = styled(LoadingComponent)`
-  ${props =>
-    props.progress === null &&
-    css`
-      circle:nth-of-type(2) {
-        transform-origin: 50% 50%;
-        stroke-dasharray: ${pathLength};
-        animation: ${fillAnimation} ${DURATION.EXTRA_LONG} ease-in-out infinite,
-          ${ANIMATION.rotate} ${DURATION.EXTRA_LONG} linear ${rotationDelay} infinite;
-      }
-    `};
+  circle:nth-of-type(2) {
+    transform-origin: 50% 50%;
+    ${props =>
+      props.progress === null
+        ? css`
+            stroke-dasharray: ${pathLength};
+            animation: ${fillAnimation} ${DURATION.EXTRA_LONG} ease-in-out infinite,
+              ${ANIMATION.rotate} ${DURATION.EXTRA_LONG} linear ${rotationDelay} infinite;
+          `
+        : css`
+            transform: rotate(-90deg);
+          `};
+  }
 `;
 
 Loading.propTypes = {

@@ -9,6 +9,9 @@
     "styled-normalize": "8.0.0"
   },
   "devDependencies": {
+    "@storybook/addon-info": "3.4.10",
+    "@storybook/addon-knobs": "3.4.10",
+    "@storybook/react": "3.4.10",
     "babel-cli": "6.26.0",
     "babel-core": "6.26.3",
     "babel-loader": "7.1.5",
@@ -36,6 +39,7 @@
     "clean": "rimraf dist",
     "dist": "yarn clean && yarn build",
     "start": "webpack-dev-server",
+    "storybook": "start-storybook -p 9001 -c .storybook",
     "test": "yarn test:browser",
     "test:project": "yarn dist && yarn test",
     "test:browser": "exit 0"

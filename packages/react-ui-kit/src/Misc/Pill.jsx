@@ -80,7 +80,7 @@ const Pill = styled.span.attrs({
 `;
 
 Pill.propTypes = {
-  active: PropTypes.boolean,
+  active: PropTypes.bool,
   children: PropTypes.node,
   type: PropTypes.oneOf(Object.keys(PILL_TYPE)),
 };
