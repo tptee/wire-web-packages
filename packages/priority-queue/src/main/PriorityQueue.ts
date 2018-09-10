@@ -60,7 +60,12 @@ export default class PriorityQueue {
   }
 
   public delete(label: string): void {
-    this.queue = this.queue.filter(item => item.label !== label);
+    const needle = this.queue.find(item => item.label === label);
+    if (needle) {
+      needle.reject();
+      // TODO: Remove "needle" from queue
+      // TODO: Update "isPending" status
+    }
   }
 
   public deleteAll(): void {

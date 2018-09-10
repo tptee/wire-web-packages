@@ -23,6 +23,7 @@ const {PriorityQueue} = require('@wireapp/priority-queue');
 beforeAll(() => (jasmine.DEFAULT_TIMEOUT_INTERVAL = 5000));
 
 describe('PriorityQueue', () => {
+  const MAX_SAFE_32BIT_INTEGER = 2147483647;
   let queue = undefined;
 
   afterEach(() => {
@@ -33,7 +34,7 @@ describe('PriorityQueue', () => {
 
   describe('"constructor"', () => {
     it('allows a configuration with zero retries', () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve(), Number.MAX_SAFE_INTEGER));
+      const promise = new Promise(resolve => setTimeout(() => resolve(), MAX_SAFE_32BIT_INTEGER));
       queue = new PriorityQueue({maxRetries: 0});
       expect(queue.config.maxRetries).toBe(0);
       queue.add(promise);
@@ -41,7 +42,7 @@ describe('PriorityQueue', () => {
     });
 
     it('does not apply negative retries', () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve(), Number.MAX_SAFE_INTEGER));
+      const promise = new Promise(resolve => setTimeout(() => resolve(), MAX_SAFE_32BIT_INTEGER));
       queue = new PriorityQueue({maxRetries: -12});
       queue.add(promise);
       expect(queue.first.retry).toBe(Infinity);
@@ -112,7 +113,7 @@ describe('PriorityQueue', () => {
     });
 
     it('supports adding a label', () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve(), Number.MAX_SAFE_INTEGER));
+      const promise = new Promise(resolve => setTimeout(() => resolve(), MAX_SAFE_32BIT_INTEGER));
 
       queue = new PriorityQueue();
       queue.add(promise, 1, 'get request');
@@ -126,8 +127,8 @@ describe('PriorityQueue', () => {
   });
 
   describe('"delete"', () => {
-    it("deletes a Promise from the queue by it's UUID", () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve(), Number.MAX_SAFE_INTEGER));
+    fit("deletes a Promise from the queue by it's UUID", () => {
+      const promise = new Promise(resolve => setTimeout(() => resolve(), MAX_SAFE_32BIT_INTEGER));
 
       queue = new PriorityQueue();
       queue.add(promise, 1);
@@ -145,7 +146,7 @@ describe('PriorityQueue', () => {
 
   describe('"deleteAll"', () => {
     it('deletes all queued Promises', () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve(), Number.MAX_SAFE_INTEGER));
+      const promise = new Promise(resolve => setTimeout(() => resolve(), MAX_SAFE_32BIT_INTEGER));
 
       queue = new PriorityQueue();
       queue.add(promise);
