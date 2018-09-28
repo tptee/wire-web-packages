@@ -1,0 +1,40 @@
+{
+  "bin": {
+    "wire-travis-status-bot": "dist/cli.js"
+  },
+  "dependencies": {
+    "@wireapp/bot-api": "1.0.21",
+    "@wireapp/store-engine": "0.12.21",
+    "axios": "0.18.0",
+    "commander": "2.18.0",
+    "feedparser": "2.2.9"
+  },
+  "description": "A Travis RSS status bot.",
+  "devDependencies": {
+    "@types/feedparser": "2.2.1",
+    "@types/node": "10.11.2",
+    "cross-env": "5.2.0",
+    "dotenv": "6.0.0",
+    "logdown": "3.2.7",
+    "rimraf": "2.6.2",
+    "typescript": "3.1.1"
+  },
+  "files": [
+    "dist"
+  ],
+  "license": "GPL-3.0",
+  "main": "dist/index.js",
+  "name": "@wireapp/travis-status-bot",
+  "repository": "https://github.com/wireapp/wire-web-packages/tree/master/packages/travis-status-bot",
+  "scripts": {
+    "build": "yarn build:node",
+    "build:node": "tsc",
+    "clean": "rimraf dist",
+    "dist": "yarn clean && yarn build",
+    "start": "cross-env NODE_ENV=\"development\" node dist/cli.js",
+    "test": "exit 0",
+    "test:project": "yarn dist && yarn test"
+  },
+  "types": "dist/index.d.ts",
+  "version": "1.0.21"
+}
