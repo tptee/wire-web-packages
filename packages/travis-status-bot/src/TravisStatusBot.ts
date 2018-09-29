@@ -18,33 +18,34 @@
  */
 
 //import * as path from 'path';
-//import * as logdown from 'logdown';
 //import {FileEngine} from '@wireapp/store-engine';
 import {MessageHandler} from '@wireapp/bot-api';
 import {PayloadBundleIncoming, PayloadBundleType, ReactionType} from '@wireapp/core/dist/conversation/root';
+import * as logdown from 'logdown';
 
 import {Connection, ConnectionStatus} from '@wireapp/api-client/dist/commonjs/connection';
 import {TextContent} from '@wireapp/core/dist/conversation/content';
+import {Options} from './interfaces';
 import {TravisRSSFeed} from './TravisRSSFeed';
 
 const {version}: {version: string} = require('../package.json');
 
 class MainHandler extends MessageHandler {
-  //private readonly logger: logdown.Logger;
+  private readonly logger: logdown.Logger;
   //private readonly STORE_PATH = path.resolve(__dirname, '.temp');
   //private readonly storeEngine: FileEngine;
   private readonly travisRSSFeed: TravisRSSFeed;
   private readonly helpText = `**Hello!** 😎 This is Travis Status Bot v${version} speaking.\n\nAvailable commands:\n- /feed \n- /help\n- /subscribe\n`;
 
-  constructor() {
+  constructor(options?: Options) {
     super();
     //this.storeEngine = new FileEngine(this.STORE_PATH);
-    this.travisRSSFeed = new TravisRSSFeed();
-    /*this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
+    this.travisRSSFeed = new TravisRSSFeed(options);
+    this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
       logger: console,
       markdown: false,
-    });*/
-    console.log(this.helpText);
+    });
+    this.logger.state.isEnabled = true;
   }
 
   public handleEvent(payload: PayloadBundleIncoming) {
@@ -69,24 +70,28 @@ class MainHandler extends MessageHandler {
   public async handleText(conversationId: string, text: string, messageId: string, senderId: string): Promise<void> {
     switch (text) {
       case '/feed': {
+        this.logger.info('Got command "/feed".');
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
         const feed = await this.travisRSSFeed.getFeed();
-        let response = '';
+        let response = 'Here are the 5 latest feed entries:\n\n';
         if (feed.length) {
-          response = feed.reduce(
-            (result, item) => (result += `"${item.title}" (${item.date ? item.date.toString() : ''})`),
-            ''
-          );
+          response = feed.slice(0, 5).reduce((result, item) => {
+            const date = item.date ? `${this.formatDate(item.date)}: ` : '';
+            const link = item.link ? ` (${item.link})` : '';
+            return (result += `- ${date}"${item.title}"${link}\n`);
+          }, response);
         } else {
           response = 'No items found :(';
         }
         return this.sendText(conversationId, response);
       }
       case '/help': {
+        this.logger.info('Got command "/help".');
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
         return this.sendText(conversationId, this.helpText);
       }
       case '/subscribe': {
+        this.logger.info('Got command "/subscribe".');
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
         return this.sendText(conversationId, 'Not yet implemented :(');
       }
@@ -96,6 +101,15 @@ class MainHandler extends MessageHandler {
   async handleConnectionRequest(userId: string, conversationId: string): Promise<void> {
     await this.sendConnectionResponse(userId, true);
     await this.sendText(conversationId, this.helpText);
+  }
+
+  private formatDate(date: Date): string {
+    const formatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit',
+    };
+    return date.toLocaleDateString('en-UK', formatOptions);
   }
 }
 

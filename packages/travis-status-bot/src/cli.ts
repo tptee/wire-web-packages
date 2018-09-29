@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 /*
  * Wire
  * Copyright (C) 2018 Wire Swiss GmbH
@@ -16,24 +18,42 @@
  * along with this program. If not, see http://www.gnu.org/licenses/.
  *
  */
+
 process.on('uncaughtException', error => console.error(`Uncaught exception: ${error.message}`, error));
 process.on('unhandledRejection', error =>
   console.error(`Uncaught rejection "${error.constructor.name}": ${error.message}`, error)
 );
 
 import {Bot} from '@wireapp/bot-api';
+import * as program from 'commander';
 import {MainHandler} from './TravisStatusBot';
 
 if (process.env.NODE_ENV === 'development') {
   require('dotenv').config();
 }
 
+const {description, name, version}: {description: string; name: string; version: string} = require('../package.json');
+
+program
+  .name(name.replace(/^@[^/]+\//, ''))
+  .version(version, '-v, --version')
+  .description(description)
+  .option('-e, --email <email>', 'Your email address')
+  .option('-m, --message <message>', 'Custom message')
+  .option('-p, --password <password>', 'Your password')
+  .option('-f, --feed <URL>', 'Custom Travis RSS Feed URL')
+  .parse(process.argv);
+
 const bot = new Bot({
-  email: String(process.env.WIRE_EMAIL),
-  password: String(process.env.WIRE_PASSWORD),
+  email: program.email || process.env.WIRE_EMAIL,
+  password: program.password || process.env.WIRE_PASSWORD,
 });
 
-const mainHandler = new MainHandler();
+const customFeedURL: string | undefined = program.feed || process.env.TRAVIS_RSS_FEED;
+
+const mainHandler = new MainHandler({
+  ...(customFeedURL && {feedUrl: customFeedURL}),
+});
 
 bot.addHandler(mainHandler);
 bot.start().catch(error => {
