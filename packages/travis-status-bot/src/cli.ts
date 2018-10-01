@@ -41,7 +41,7 @@ program
   .option('-e, --email <email>', 'Your email address')
   .option('-m, --message <message>', 'Custom message')
   .option('-p, --password <password>', 'Your password')
-  .option('-f, --feed <URL>', 'Custom Travis RSS Feed URL')
+  .option('-f, --feed <URL>', 'Custom Travis JSON file')
   .parse(process.argv);
 
 const bot = new Bot({
@@ -49,7 +49,7 @@ const bot = new Bot({
   password: program.password || process.env.WIRE_PASSWORD,
 });
 
-const customFeedURL: string | undefined = program.feed || process.env.TRAVIS_RSS_FEED;
+const customFeedURL: string | undefined = program.feed || process.env.TRAVIS_FEED_URL;
 
 const mainHandler = new MainHandler({
   ...(customFeedURL && {feedUrl: customFeedURL}),

@@ -26,7 +26,7 @@ import * as logdown from 'logdown';
 import {Connection, ConnectionStatus} from '@wireapp/api-client/dist/commonjs/connection';
 import {TextContent} from '@wireapp/core/dist/conversation/content';
 import {Options} from './interfaces';
-import {TravisRSSFeed} from './TravisRSSFeed';
+import {TravisFeed} from './TravisFeed';
 
 const {version}: {version: string} = require('../package.json');
 
@@ -34,13 +34,13 @@ class MainHandler extends MessageHandler {
   private readonly logger: logdown.Logger;
   //private readonly STORE_PATH = path.resolve(__dirname, '.temp');
   //private readonly storeEngine: FileEngine;
-  private readonly travisRSSFeed: TravisRSSFeed;
+  private readonly travisFeed: TravisFeed;
   private readonly helpText = `**Hello!** 😎 This is Travis Status Bot v${version} speaking.\n\nAvailable commands:\n- /feed \n- /help\n- /subscribe\n`;
 
   constructor(options?: Options) {
     super();
     //this.storeEngine = new FileEngine(this.STORE_PATH);
-    this.travisRSSFeed = new TravisRSSFeed(options);
+    this.travisFeed = new TravisFeed(options);
     this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
       logger: console,
       markdown: false,
@@ -72,13 +72,13 @@ class MainHandler extends MessageHandler {
       case '/feed': {
         this.logger.info('Got command "/feed".');
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
-        const feed = await this.travisRSSFeed.getFeed();
+        const {incidents} = await this.travisFeed.getFeed();
         let response = 'Here are the 5 latest feed entries:\n\n';
-        if (feed.length) {
-          response = feed.slice(0, 5).reduce((result, item) => {
-            const date = item.date ? `${this.formatDate(item.date)}: ` : '';
-            const link = item.link ? ` (${item.link})` : '';
-            return (result += `- ${date}"${item.title}"${link}\n`);
+        if (incidents.length) {
+          response = incidents.slice(0, 5).reduce((result, incident) => {
+            const date = incident.created_at ? `${this.formatDate(incident.created_at)}: ` : '';
+            const link = incident.shortlink ? ` (${incident.shortlink})` : '';
+            return (result += `- ${date}"${incident.name}"${link}\n`);
           }, response);
         } else {
           response = 'No items found :(';
@@ -103,13 +103,13 @@ class MainHandler extends MessageHandler {
     await this.sendText(conversationId, this.helpText);
   }
 
-  private formatDate(date: Date): string {
+  private formatDate(date: string): string {
     const formatOptions = {
       day: '2-digit',
       month: '2-digit',
       year: '2-digit',
     };
-    return date.toLocaleDateString('en-UK', formatOptions);
+    return new Date(date).toLocaleDateString('en-UK', formatOptions);
   }
 }
 

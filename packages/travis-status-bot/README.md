@@ -8,7 +8,7 @@ For licensing information, see the attached LICENSE file and the list of third-p
 
 ## Changelog Bot
 
-A bot listening to the RSS feed on [traviscistatus.com](https://www.traviscistatus.com) and reporting to a given chat.
+A bot listening to the JSON file on [traviscistatus.com](https://www.traviscistatus.com) and reporting to a given chat.
 
 ### Getting Started
 
