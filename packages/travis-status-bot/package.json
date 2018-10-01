@@ -3,10 +3,12 @@
     "wire-travis-status-bot": "dist/cli.js"
   },
   "dependencies": {
-    "@wireapp/bot-api": "1.0.21",
+    "@wireapp/bot-api": "1.0.22",
     "@wireapp/store-engine": "0.12.21",
     "axios": "0.18.0",
     "commander": "2.18.0",
+    "eslint": "5.6.1",
+    "eslint-plugin-prettier": "3.0.0",
     "feedparser": "2.2.9"
   },
   "description": "A Travis RSS status bot.",
