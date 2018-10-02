@@ -65,6 +65,6 @@ mainHandler
     return bot.start();
   })
   .catch(error => {
-    console.error(error);
+    console.error('error', error);
     process.exit(1);
   });

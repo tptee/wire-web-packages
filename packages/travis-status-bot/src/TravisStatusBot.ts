@@ -41,7 +41,7 @@ class MainHandler extends MessageHandler {
     this.storeService = new StoreService(options && options.storePath);
     this.travisFeedService = new TravisFeedService(
       this.storeService,
-      this.notifySubscribers,
+      this.notifySubscribers.bind(this),
       options && options.feedUrl
     );
     this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
@@ -56,7 +56,7 @@ class MainHandler extends MessageHandler {
       case PayloadBundleType.TEXT: {
         if (payload.conversation) {
           const messageContent = payload.content as TextContent;
-          return this.handleText(payload.conversation, messageContent.text, payload.id);
+          return this.handleText(payload.conversation, messageContent.text, payload.id, payload.from);
         }
       }
       case PayloadBundleType.CONNECTION_REQUEST: {
@@ -71,6 +71,7 @@ class MainHandler extends MessageHandler {
   }
 
   public async init(): Promise<void> {
+    this.logger.info('Initializing MainHandler');
     await this.storeService.init();
     await this.travisFeedService.init();
   }
@@ -80,17 +81,22 @@ class MainHandler extends MessageHandler {
   }
 
   private async handleCommandFeed(conversationId: string, messageId: string): Promise<void> {
+    let response = '';
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
-    const {incidents} = await this.travisFeedService.getFeed();
-    let response = 'Here are the 5 latest feed entries:\n\n';
-    if (incidents.length) {
-      response = incidents.slice(0, 5).reduce((result, incident) => {
-        const date = incident.created_at ? `${this.formatDate(incident.created_at)}: ` : '';
-        const link = incident.shortlink ? ` (${incident.shortlink})` : '';
-        return (result += `- ${date}"${incident.name}"${link}\n`);
-      }, response);
+    const feed = await this.travisFeedService.getFeed();
+    if (!feed) {
+      response = 'Could not load the latest Travis feed.';
     } else {
-      response = 'No items found :(';
+      let response = 'Here are the 5 latest feed entries:\n\n';
+      if (feed.incidents.length) {
+        response = feed.incidents.slice(0, 5).reduce((result, incident) => {
+          const date = incident.created_at ? `${this.formatDate(incident.created_at)}: ` : '';
+          const link = incident.shortlink ? ` (${incident.shortlink})` : '';
+          return (result += `- ${date}"${incident.name}"${link}\n`);
+        }, response);
+      } else {
+        response = 'No items found :(';
+      }
     }
     return this.sendText(conversationId, response);
   }
@@ -153,38 +159,38 @@ class MainHandler extends MessageHandler {
     await this.sendText(conversationId, this.helpText);
   }
 
-  public async handleText(conversationId: string, rawText: string, messageId: string): Promise<void> {
+  public async handleText(conversationId: string, rawText: string, messageId: string, senderId: string): Promise<void> {
     if (!rawText.startsWith('/')) {
       return;
     }
 
     switch (rawText) {
       case '/feed': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandFeed(conversationId, messageId);
       }
       case '/help': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandHelp(conversationId, messageId);
       }
       case '/subscribe': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandSubscribe(conversationId, messageId);
       }
       case '/subscribed': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandSubscribed(conversationId, messageId);
       }
       case '/unsubscribe': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandUnsubscribe(conversationId, messageId);
       }
       case '/update': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         return this.handleCommandUpdate(conversationId, messageId);
       }
       case '/notify': {
-        this.logger.info(`Received command "${rawText}".`);
+        this.logger.info(`Received command "${rawText}" from "${senderId}".`);
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
         try {
           const notifiedIds = await this.sendToSubscribers('Test notification');
@@ -208,11 +214,12 @@ class MainHandler extends MessageHandler {
     for (const incident of incidents) {
       /* tslint:disable:prefer-template */
       const message =
-        '⚠️ Travis incident report ⚠️\n\n' +
-        `**${incident.name}** (${incident.impact} impact})\n` +
-        `Affected components: ${incident}` +
-        incident.incident_updates.reduce((message, update) => message + update.body, '');
+        '⚠️ **Travis incident report**\n\n' +
+        `**${incident.name}** (${incident.impact} impact)\n` +
+        incident.incident_updates.reduce((message, update) => message + update.body.substr(0, 10) + '...', '') +
+        `\n\nMore info: ${incident.shortlink}`;
       /* tslint:enable:prefer-template */
+      this.logger.info(`Notifying subscribers about ${incident.id} ...`);
       await this.sendToSubscribers(message);
     }
   }
@@ -223,6 +230,11 @@ class MainHandler extends MessageHandler {
     for (const conversationId of conversationIds) {
       await this.sendText(conversationId, message);
     }
+
+    const notificationMessage = conversationIds.length
+      ? `Successfully notified ${conversationIds.length} subscriber${conversationIds.length === 1 ? '' : 's'}.`
+      : 'Currently nobody is subscribed.';
+    this.logger.info(notificationMessage);
 
     return conversationIds;
   }

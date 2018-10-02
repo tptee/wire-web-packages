@@ -45,47 +45,81 @@ class TravisFeedService {
   }
 
   public async init(): Promise<void> {
-    await new CronJob('*/1', () => this.updateFeed());
-  }
-
-  public async getFeed(): Promise<TravisStatus> {
     await this.updateFeed();
-    return this.storeService.getFeedData();
+
+    const cronJobTime = '*/1';
+    new CronJob(cronJobTime, () => this.updateFeed()).start();
+    this.logger.info(`Initialized cron job with time: "${cronJobTime}".`);
   }
 
-  private async getNewIncidents(data: TravisStatus): Promise<TravisIncident[] | null> {
-    if (!data.incidents || !data.incidents.length) {
+  public async getFeed(): Promise<TravisStatus | null> {
+    await this.updateFeed();
+    const cachedFeedData = this.storeService.loadFeedFromCache();
+    if (!cachedFeedData) {
+      this.logger.info('Not feed data loaded from cache.');
+    }
+    return cachedFeedData;
+  }
+
+  private async getNewIncidents(oldData: TravisStatus, newData: TravisStatus): Promise<TravisIncident[] | null> {
+    if (!newData.incidents || !newData.incidents.length) {
+      this.logger.info('!newData.incidents || !newData.incidents.length');
       return null;
     }
 
-    const cachedData = await this.storeService.getFeedData();
-    const cachedIncidents = cachedData.incidents;
-
-    if (!cachedIncidents || !cachedIncidents.length) {
-      return data.incidents;
+    if (!oldData.incidents || !oldData.incidents.length) {
+      return newData.incidents;
     }
 
-    const newIncidents = data.incidents.filter(dataIncident =>
+    const cachedIncidents = oldData.incidents;
+
+    if (!cachedIncidents || !cachedIncidents.length) {
+      return newData.incidents;
+    }
+
+    const newIncidents = newData.incidents.filter(dataIncident =>
       cachedIncidents.some(cachedIncident => cachedIncident.id === dataIncident.id)
     );
     return newIncidents.length ? newIncidents : null;
   }
 
-  public async updateFeed(): Promise<void> {
+  public async updateFeed(): Promise<TravisStatus | null> {
     const feedData = await this.requestFeedData();
-    const newIncidents = await this.getNewIncidents(feedData);
-    await this.storeService.updateFeedData(feedData);
-    this.logger.info('Updated Travis feed.');
+    const cachedData = await this.storeService.loadFeedFromCache();
+
+    if (!feedData) {
+      this.logger.info(`Did not save Travis feed to cache.`);
+      return cachedData || null;
+    }
+
+    await this.storeService.saveFeedToCache(feedData);
+
+    let newIncidents: TravisIncident[] | null = null;
+
+    if (cachedData) {
+      newIncidents = await this.getNewIncidents(cachedData, feedData);
+    }
+
+    this.logger.info(`Saved Travis feed to cache. Got ${newIncidents ? newIncidents.length : 'no'} new incidents.`);
 
     if (newIncidents) {
       await this.notifySubscribers(newIncidents);
     }
+
+    return feedData;
   }
 
-  private async requestFeedData(): Promise<TravisStatus> {
-    const {data} = await axios.get<TravisStatus>(this.FEED_URL);
-    this.logger.info(`Got ${data.incidents.length} incidents and ${data.components.length} components.`);
-    return data;
+  private async requestFeedData(): Promise<TravisStatus | null> {
+    try {
+      const {data} = await axios.get<TravisStatus>(this.FEED_URL);
+      this.logger.info(
+        `Received ${data.incidents.length} incidents and ${data.components.length} components from ${this.FEED_URL}.`
+      );
+      return data;
+    } catch (error) {
+      this.logger.error(`Request to "${error.config.url}" failed with status code "${error.response.status}".`);
+      return null;
+    }
   }
 }
 

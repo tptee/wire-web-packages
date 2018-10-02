@@ -44,20 +44,61 @@ class StoreService {
     this.logger.state.isEnabled = true;
   }
 
-  public async updateFeedData(feed: TravisStatus): Promise<void> {
-    await this.storeEngine.updateOrCreate(this.TABLE_NAME_FEED, 'full', feed);
+  public async saveFeedToCache(feed: TravisStatus): Promise<void> {
+    try {
+      await this.storeEngine.updateOrCreate(this.TABLE_NAME_FEED, 'full', feed);
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
-  public async getFeedData(): Promise<TravisStatus> {
-    return this.storeEngine.read<TravisStatus>(this.TABLE_NAME_FEED, 'full');
+  public async loadFeedFromCache(): Promise<TravisStatus | null> {
+    try {
+      const data = await this.storeEngine.read<TravisStatus>(this.TABLE_NAME_FEED, 'full');
+      return data;
+    } catch (error) {
+      const recordNotFound =
+        error instanceof StoreEngineError.RecordNotFoundError ||
+        error.constructor.name !== StoreEngineError.RecordNotFoundError.name;
+      if (!recordNotFound) {
+        this.logger.error(error);
+      }
+      return null;
+    }
   }
 
   public async addSubscriber(subscriberId: string): Promise<void> {
-    await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, subscriberId, {isSubscribed: true});
+    try {
+      await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, subscriberId, {isSubscribed: true});
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 
   public async init(): Promise<void> {
-    await this.storeEngine.init('travis-status-bot');
+    try {
+      await this.storeEngine.init('travis-status-bot');
+    } catch (error) {
+      this.logger.error(error);
+    }
+
+    const subscriberIds = await this.getSubscribers();
+    if (subscriberIds.length) {
+      this.logger.info(`Loaded ${subscriberIds.length} subscriber${subscriberIds.length === 1 ? '' : 's'} from cache.`);
+    } else {
+      this.logger.info(`No subscribers loaded from cache.`);
+    }
+
+    const feedData = await this.loadFeedFromCache();
+    if (feedData && feedData.incidents && feedData.incidents.length) {
+      this.logger.info(
+        `Loaded feed data with ${feedData.incidents.length} incident${
+          feedData.incidents.length === 1 ? '' : 's'
+        } from cache.`
+      );
+    } else {
+      this.logger.info(`No feed data loaded from cache.`);
+    }
   }
 
   public async checkSubscription(conversationId: string): Promise<boolean> {
@@ -79,7 +120,20 @@ class StoreService {
   }
 
   public async getSubscribers(): Promise<string[]> {
-    const conversationIds = await this.storeEngine.readAllPrimaryKeys(this.TABLE_NAME_SUBSCRIBERS);
+    let conversationIds: string[] = [];
+
+    try {
+      conversationIds = await this.storeEngine.readAllPrimaryKeys(this.TABLE_NAME_SUBSCRIBERS);
+    } catch (error) {
+      const recordNotFound =
+        error instanceof StoreEngineError.RecordNotFoundError ||
+        error.constructor.name !== StoreEngineError.RecordNotFoundError.name;
+      if (!recordNotFound) {
+        this.logger.error(error);
+      }
+      return conversationIds;
+    }
+
     const subscriberIds = [];
 
     for (const conversationId of conversationIds) {
@@ -93,7 +147,11 @@ class StoreService {
   }
 
   public async removeSubscriber(conversationId: string): Promise<void> {
-    await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, conversationId, {isSubscribed: false});
+    try {
+      await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, conversationId, {isSubscribed: false});
+    } catch (error) {
+      this.logger.error(error);
+    }
   }
 }
 
