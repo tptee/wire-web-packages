@@ -22,13 +22,14 @@ import {FileEngine} from '@wireapp/store-engine/dist/commonjs/engine';
 import * as logdown from 'logdown';
 import * as path from 'path';
 
-import {SubscriberOptions} from './interfaces';
+import {SubscriberOptions, TravisStatus} from './interfaces';
 
 const defaultStorePath = path.join(__dirname, '.temp');
 
 class StoreService {
   private readonly STORE_PATH: string;
-  private readonly TABLE_NAME = 'subscribers';
+  private readonly TABLE_NAME_SUBSCRIBERS = 'subscribers';
+  private readonly TABLE_NAME_FEED = 'travis-feed';
   private readonly logger: logdown.Logger;
   private readonly storeEngine: FileEngine;
 
@@ -43,8 +44,16 @@ class StoreService {
     this.logger.state.isEnabled = true;
   }
 
+  public async updateFeedData(feed: TravisStatus): Promise<void> {
+    await this.storeEngine.updateOrCreate(this.TABLE_NAME_FEED, 'full', feed);
+  }
+
+  public async getFeedData(): Promise<TravisStatus> {
+    return this.storeEngine.read<TravisStatus>(this.TABLE_NAME_FEED, 'full');
+  }
+
   public async addSubscriber(subscriberId: string): Promise<void> {
-    await this.storeEngine.updateOrCreate(this.TABLE_NAME, subscriberId, {isSubscribed: true});
+    await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, subscriberId, {isSubscribed: true});
   }
 
   public async init(): Promise<void> {
@@ -53,7 +62,10 @@ class StoreService {
 
   public async checkSubscription(conversationId: string): Promise<boolean> {
     try {
-      const {isSubscribed} = await this.storeEngine.read<SubscriberOptions>(this.TABLE_NAME, conversationId);
+      const {isSubscribed} = await this.storeEngine.read<SubscriberOptions>(
+        this.TABLE_NAME_SUBSCRIBERS,
+        conversationId
+      );
       return isSubscribed;
     } catch (error) {
       const recordNotFound =
@@ -67,7 +79,7 @@ class StoreService {
   }
 
   public async getSubscribers(): Promise<string[]> {
-    const conversationIds = await this.storeEngine.readAllPrimaryKeys(this.TABLE_NAME);
+    const conversationIds = await this.storeEngine.readAllPrimaryKeys(this.TABLE_NAME_SUBSCRIBERS);
     const subscriberIds = [];
 
     for (const conversationId of conversationIds) {
@@ -81,7 +93,7 @@ class StoreService {
   }
 
   public async removeSubscriber(conversationId: string): Promise<void> {
-    await this.storeEngine.updateOrCreate(this.TABLE_NAME, conversationId, {isSubscribed: false});
+    await this.storeEngine.updateOrCreate(this.TABLE_NAME_SUBSCRIBERS, conversationId, {isSubscribed: false});
   }
 }
 

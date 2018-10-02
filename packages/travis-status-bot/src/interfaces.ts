@@ -104,4 +104,4 @@ interface TravisStatus {
   };
 }
 
-export {Options, SubscriberOptions, TravisStatus};
+export {Options, SubscriberOptions, TravisIncident, TravisStatus};

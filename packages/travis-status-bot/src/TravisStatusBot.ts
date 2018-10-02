@@ -24,7 +24,7 @@ import {PayloadBundleIncoming, PayloadBundleType, ReactionType} from '@wireapp/c
 import * as logdown from 'logdown';
 import * as moment from 'moment';
 
-import {Options} from './interfaces';
+import {Options, TravisIncident} from './interfaces';
 import {StoreService} from './StoreService';
 import {TravisFeedService} from './TravisFeedService';
 
@@ -38,8 +38,12 @@ class MainHandler extends MessageHandler {
 
   constructor(options?: Options) {
     super();
-    this.travisFeedService = new TravisFeedService(options && options.feedUrl);
     this.storeService = new StoreService(options && options.storePath);
+    this.travisFeedService = new TravisFeedService(
+      this.storeService,
+      this.notifySubscribers,
+      options && options.feedUrl
+    );
     this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
       logger: console,
       markdown: false,
@@ -68,6 +72,7 @@ class MainHandler extends MessageHandler {
 
   public async init(): Promise<void> {
     await this.storeService.init();
+    await this.travisFeedService.init();
   }
 
   private formatDate(date: string | Date): string {
@@ -131,38 +136,58 @@ class MainHandler extends MessageHandler {
     }
   }
 
+  private async handleCommandUpdate(conversationId: string, messageId: string): Promise<void> {
+    await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
+
+    try {
+      await this.travisFeedService.updateFeed();
+      return this.sendText(conversationId, 'Successfully updated the Travis feed.');
+    } catch (error) {
+      this.logger.error(error);
+      return this.sendText(conversationId, 'Sorry, something went wrong :(');
+    }
+  }
+
   private async handleConnectionRequest(userId: string, conversationId: string): Promise<void> {
     await this.sendConnectionResponse(userId, true);
     await this.sendText(conversationId, this.helpText);
   }
 
   public async handleText(conversationId: string, rawText: string, messageId: string): Promise<void> {
+    if (!rawText.startsWith('/')) {
+      return;
+    }
+
     switch (rawText) {
       case '/feed': {
-        this.logger.info('Received command "/feed".');
+        this.logger.info(`Received command "${rawText}".`);
         return this.handleCommandFeed(conversationId, messageId);
       }
       case '/help': {
-        this.logger.info('Received command "/help".');
+        this.logger.info(`Received command "${rawText}".`);
         return this.handleCommandHelp(conversationId, messageId);
       }
       case '/subscribe': {
-        this.logger.info('Received command "/subscribe".');
+        this.logger.info(`Received command "${rawText}".`);
         return this.handleCommandSubscribe(conversationId, messageId);
       }
       case '/subscribed': {
-        this.logger.info('Received command "/subscribed".');
+        this.logger.info(`Received command "${rawText}".`);
         return this.handleCommandSubscribed(conversationId, messageId);
       }
       case '/unsubscribe': {
-        this.logger.info('Received command "/unsubscribe".');
+        this.logger.info(`Received command "${rawText}".`);
         return this.handleCommandUnsubscribe(conversationId, messageId);
       }
+      case '/update': {
+        this.logger.info(`Received command "${rawText}".`);
+        return this.handleCommandUpdate(conversationId, messageId);
+      }
       case '/notify': {
-        this.logger.info('Received command "/notify".');
+        this.logger.info(`Received command "${rawText}".`);
         await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
         try {
-          const notifiedIds = await this.notifySubscribers('Test notification');
+          const notifiedIds = await this.sendToSubscribers('Test notification');
           const answer = notifiedIds.length
             ? `Successfully notified ${notifiedIds.length} subscriber${notifiedIds.length === 1 ? '' : 's'}.`
             : 'Currently nobody is subscribed.';
@@ -173,14 +198,26 @@ class MainHandler extends MessageHandler {
         }
       }
       default: {
-        if (rawText.startsWith('/')) {
-          return this.sendText(conversationId, `Sorry, I don't know the command "${rawText}" yet.`);
-        }
+        this.logger.info(`Received unknown command "${rawText}".`);
+        return this.sendText(conversationId, `Sorry, I don't know the command "${rawText}" yet.`);
       }
     }
   }
 
-  private async notifySubscribers(message: string): Promise<string[]> {
+  private async notifySubscribers(incidents: TravisIncident[]): Promise<void> {
+    for (const incident of incidents) {
+      /* tslint:disable:prefer-template */
+      const message =
+        '⚠️ Travis incident report ⚠️\n\n' +
+        `**${incident.name}** (${incident.impact} impact})\n` +
+        `Affected components: ${incident}` +
+        incident.incident_updates.reduce((message, update) => message + update.body, '');
+      /* tslint:enable:prefer-template */
+      await this.sendToSubscribers(message);
+    }
+  }
+
+  private async sendToSubscribers(message: string): Promise<string[]> {
     const conversationIds = await this.storeService.getSubscribers();
 
     for (const conversationId of conversationIds) {

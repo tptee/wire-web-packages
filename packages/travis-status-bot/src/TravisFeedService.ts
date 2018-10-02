@@ -18,9 +18,11 @@
  */
 
 import axios from 'axios';
+import {CronJob} from 'cron';
 import * as logdown from 'logdown';
 
-import {TravisStatus} from './interfaces';
+import {TravisIncident, TravisStatus} from './interfaces';
+import {StoreService} from './StoreService';
 
 const defaultFeedUrl = 'https://www.traviscistatus.com/index.json';
 
@@ -28,7 +30,11 @@ class TravisFeedService {
   private readonly logger: logdown.Logger;
   private readonly FEED_URL: string;
 
-  constructor(feedUrl?: string) {
+  constructor(
+    private readonly storeService: StoreService,
+    private readonly notifySubscribers: ((incidents: TravisIncident[]) => Promise<void>),
+    feedUrl?: string
+  ) {
     this.FEED_URL = feedUrl || defaultFeedUrl;
 
     this.logger = logdown('@wireapp/travis-status-bot/TravisFeedService', {
@@ -38,7 +44,45 @@ class TravisFeedService {
     this.logger.state.isEnabled = true;
   }
 
+  public async init(): Promise<void> {
+    await new CronJob('*/1', () => this.updateFeed());
+  }
+
   public async getFeed(): Promise<TravisStatus> {
+    await this.updateFeed();
+    return this.storeService.getFeedData();
+  }
+
+  private async getNewIncidents(data: TravisStatus): Promise<TravisIncident[] | null> {
+    if (!data.incidents || !data.incidents.length) {
+      return null;
+    }
+
+    const cachedData = await this.storeService.getFeedData();
+    const cachedIncidents = cachedData.incidents;
+
+    if (!cachedIncidents || !cachedIncidents.length) {
+      return data.incidents;
+    }
+
+    const newIncidents = data.incidents.filter(dataIncident =>
+      cachedIncidents.some(cachedIncident => cachedIncident.id === dataIncident.id)
+    );
+    return newIncidents.length ? newIncidents : null;
+  }
+
+  public async updateFeed(): Promise<void> {
+    const feedData = await this.requestFeedData();
+    const newIncidents = await this.getNewIncidents(feedData);
+    await this.storeService.updateFeedData(feedData);
+    this.logger.info('Updated Travis feed.');
+
+    if (newIncidents) {
+      await this.notifySubscribers(newIncidents);
+    }
+  }
+
+  private async requestFeedData(): Promise<TravisStatus> {
     const {data} = await axios.get<TravisStatus>(this.FEED_URL);
     this.logger.info(`Got ${data.incidents.length} incidents and ${data.components.length} components.`);
     return data;
