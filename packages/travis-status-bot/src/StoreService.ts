@@ -48,9 +48,7 @@ class StoreService {
   }
 
   public async init(): Promise<void> {
-    await this.storeEngine.init('travis-status-bot', {
-      fileExtension: '.dat',
-    });
+    await this.storeEngine.init('travis-status-bot');
   }
 
   public async checkSubscription(conversationId: string): Promise<boolean> {
