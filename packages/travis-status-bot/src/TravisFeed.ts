@@ -20,21 +20,14 @@
 import axios from 'axios';
 import * as logdown from 'logdown';
 
-import {Options, TravisStatus} from './interfaces';
-
-const defaultConfig: Required<Options> = {
-  feedUrl: 'https://www.traviscistatus.com/index.json',
-};
+import {TravisStatus} from './interfaces';
 
 class TravisFeed {
-  private readonly config: Required<Options>;
   private readonly logger: logdown.Logger;
+  private readonly FEED_URL = 'https://www.traviscistatus.com/index.json';
 
-  constructor(options?: Options) {
-    this.config = {
-      ...defaultConfig,
-      ...options,
-    };
+  constructor(feedUrl?: string) {
+    this.FEED_URL = feedUrl || this.FEED_URL;
 
     this.logger = logdown('@wireapp/travis-status-bot/TravisFeed', {
       logger: console,
@@ -44,7 +37,7 @@ class TravisFeed {
   }
 
   public async getFeed(): Promise<TravisStatus> {
-    const {data} = await axios.get<TravisStatus>(this.config.feedUrl);
+    const {data} = await axios.get<TravisStatus>(this.FEED_URL);
     this.logger.info(`Got ${data.incidents.length} incidents and ${data.components.length} components.`);
     return data;
   }

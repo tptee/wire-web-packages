@@ -19,6 +19,11 @@
 
 interface Options {
   feedUrl?: string;
+  storePath?: string;
+}
+
+interface SubscriberOptions {
+  isSubscribed: boolean;
 }
 
 interface TravisComponent {
@@ -99,4 +104,4 @@ interface TravisStatus {
   };
 }
 
-export {Options, TravisStatus};
+export {Options, SubscriberOptions, TravisStatus};

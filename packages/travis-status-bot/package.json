@@ -6,7 +6,8 @@
     "@wireapp/bot-api": "1.0.28",
     "@wireapp/store-engine": "0.12.22",
     "axios": "0.18.0",
-    "commander": "2.18.0"
+    "commander": "2.18.0",
+    "moment": "2.22.2"
   },
   "description": "A Travis status bot.",
   "devDependencies": {

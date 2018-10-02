@@ -42,6 +42,7 @@ program
   .option('-m, --message <message>', 'Custom message')
   .option('-p, --password <password>', 'Your password')
   .option('-f, --feed <URL>', 'Custom Travis JSON file')
+  .option('-s, --store <path>', 'Custom store engine file path')
   .parse(process.argv);
 
 const bot = new Bot({
@@ -50,13 +51,19 @@ const bot = new Bot({
 });
 
 const customFeedURL: string | undefined = program.feed || process.env.TRAVIS_FEED_URL;
+const customStorePath: string | undefined = program.feed || process.env.STORE_PATH;
 
 const mainHandler = new MainHandler({
   ...(customFeedURL && {feedUrl: customFeedURL}),
+  ...(customStorePath && {storePath: customStorePath}),
 });
-
-bot.addHandler(mainHandler);
-bot.start().catch(error => {
-  console.error(error);
-  process.exit(1);
-});
+mainHandler
+  .init()
+  .then(() => {
+    bot.addHandler(mainHandler);
+    return bot.start();
+  })
+  .catch(error => {
+    console.error(error);
+    process.exit(1);
+  });
