@@ -3,15 +3,14 @@
     "wire-travis-status-bot": "dist/cli.js"
   },
   "dependencies": {
-    "@wireapp/bot-api": "1.0.22",
-    "@wireapp/store-engine": "0.12.21",
+    "@wireapp/bot-api": "1.0.28",
+    "@wireapp/store-engine": "0.12.22",
     "axios": "0.18.0",
     "commander": "2.18.0"
   },
   "description": "A Travis status bot.",
   "devDependencies": {
-    "@types/feedparser": "2.2.1",
-    "@types/node": "10.11.2",
+    "@types/node": "10.11.3",
     "cross-env": "5.2.0",
     "dotenv": "6.0.0",
     "logdown": "3.2.7",
