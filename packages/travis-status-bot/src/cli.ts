@@ -57,6 +57,7 @@ const mainHandler = new MainHandler({
   ...(customFeedURL && {feedUrl: customFeedURL}),
   ...(customStorePath && {storePath: customStorePath}),
 });
+
 mainHandler
   .init()
   .then(() => {

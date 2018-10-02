@@ -22,14 +22,16 @@ import * as logdown from 'logdown';
 
 import {TravisStatus} from './interfaces';
 
-class TravisFeed {
+const defaultFeedUrl = 'https://www.traviscistatus.com/index.json';
+
+class TravisFeedService {
   private readonly logger: logdown.Logger;
-  private readonly FEED_URL = 'https://www.traviscistatus.com/index.json';
+  private readonly FEED_URL: string;
 
   constructor(feedUrl?: string) {
-    this.FEED_URL = feedUrl || this.FEED_URL;
+    this.FEED_URL = feedUrl || defaultFeedUrl;
 
-    this.logger = logdown('@wireapp/travis-status-bot/TravisFeed', {
+    this.logger = logdown('@wireapp/travis-status-bot/TravisFeedService', {
       logger: console,
       markdown: false,
     });
@@ -43,4 +45,4 @@ class TravisFeed {
   }
 }
 
-export {TravisFeed};
+export {TravisFeedService};

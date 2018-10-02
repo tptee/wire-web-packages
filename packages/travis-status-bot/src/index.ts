@@ -18,5 +18,6 @@
  */
 
 export * from './interfaces';
-export * from './TravisFeed';
+export * from './StoreService';
+export * from './TravisFeedService';
 export * from './TravisStatusBot';
