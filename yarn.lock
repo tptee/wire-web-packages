@@ -1453,11 +1453,6 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-10.11.6.tgz#ce5690df6cd917a9178439a1013e39a7e565c46e"
   integrity sha512-fnA7yvqg3oKQDb3skBif9w5RRKVKAaeKeNuLzZL37XcSiWL4IoSXQnnbchR3UnBu2EMLHBip7ZVEkqoIVBP8QQ==
 
-"@types/node@10.11.3":
-  version "10.11.3"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-10.11.3.tgz#c055536ac8a5e871701aa01914be5731539d01ee"
-  integrity sha512-3AvcEJAh9EMatxs+OxAlvAEs7OTy6AG94mcH1iqyVDwVVndekLxzwkWQ/Z4SDbY6GO2oyUXyWW8tQ4rENSSQVQ==
-
 "@types/platform@1.3.1":
   version "1.3.1"
   resolved "https://registry.yarnpkg.com/@types/platform/-/platform-1.3.1.tgz#5a66616693e39f311b3f2c64c77cf2249e3d8325"
@@ -1644,105 +1639,12 @@
     "@webassemblyjs/wast-parser" "1.7.8"
     "@xtuc/long" "4.2.1"
 
-"@wireapp/api-client@1.16.5":
-  version "1.16.5"
-  resolved "https://registry.yarnpkg.com/@wireapp/api-client/-/api-client-1.16.5.tgz#e8c9e3b1159c6eade9efd7cef7973d94616e3f33"
-  integrity sha512-MPh1Kz5gFBSy4osDr0L7UrUIZzd455Pse/LhFdRsH8bOF6kXDaZhd/v2ETlQ1nLrHOU7SVai/lO39PNg4LxGiQ==
-  dependencies:
-    "@types/node" "10.11.3"
-    "@types/spark-md5" "3.0.1"
-    "@types/tough-cookie" "2.3.3"
-    "@wireapp/priority-queue" "0.2.22"
-    "@wireapp/store-engine" "0.12.23"
-    axios "0.18.0"
-    html5-websocket "2.0.3"
-    logdown "3.2.7"
-    reconnecting-websocket "3.2.2"
-    spark-md5 "3.0.0"
-    tough-cookie "2.4.3"
-
-"@wireapp/bot-api@1.0.30":
-  version "1.0.30"
-  resolved "https://registry.yarnpkg.com/@wireapp/bot-api/-/bot-api-1.0.30.tgz#2eb345e8748d36fe6489de8382c5bf5c75d2beb7"
-  integrity sha512-KOfA36cHqDS2ZnfH6Z7wN4oYfI2p90cguW4Tz34Rs1KFl2qjqHSB+LSueP66h8f3ZKlCjpQ+Lp2A7wEqGNHyeQ==
-  dependencies:
-    "@wireapp/core" "6.5.5"
-    pure-uuid "1.5.4"
-
-"@wireapp/cbor@3.0.88":
-  version "3.0.88"
-  resolved "https://registry.yarnpkg.com/@wireapp/cbor/-/cbor-3.0.88.tgz#d3671621103aa2b20611c7dc4c5ca061f88f40c1"
-  integrity sha512-sRepcSsrnt9o8NMQ8WBb4+3pM401sip0kYHGN/Bw5ObFS6E53Dv9laDdS2eyMYK1moUZ51xdkTZM/Fgwde0JSw==
-
-"@wireapp/core@6.5.5":
-  version "6.5.5"
-  resolved "https://registry.yarnpkg.com/@wireapp/core/-/core-6.5.5.tgz#6a39071514f7622185386173fbeff703a602323c"
-  integrity sha512-WTF6MlL5TiCCpjC7vY3Rg1zOurhIdwCTYh3vUMoVBRaaIRHIioSxrfCMfaV/HvgloUUeEJ6AplhYZvb9IJ/MAA==
-  dependencies:
-    "@types/node" "10.11.3"
-    "@wireapp/api-client" "1.16.5"
-    "@wireapp/cryptobox" "8.7.27"
-    "@wireapp/protocol-messaging" "1.21.6"
-    "@wireapp/store-engine" "0.12.23"
-    bazinga64 "5.3.13"
-    logdown "3.2.7"
-    protobufjs "6.8.8"
-    pure-uuid "1.5.4"
-
-"@wireapp/cryptobox@8.7.27":
-  version "8.7.27"
-  resolved "https://registry.yarnpkg.com/@wireapp/cryptobox/-/cryptobox-8.7.27.tgz#56858f72a1c7a832ae524658b5444c7928865d0c"
-  integrity sha512-jnQQUOmQ2feDzwNSl6EDK4JBcxaTYQKlEsWlkF6mWE9rfUtvAKfqS+jCLTREg3iehu8tKjmrq10VwhF/EYFWZQ==
-  dependencies:
-    "@types/fs-extra" "5.0.4"
-    "@types/node" "10.11.3"
-    "@wireapp/lru-cache" "3.0.5"
-    "@wireapp/priority-queue" "0.2.22"
-    "@wireapp/proteus" "7.3.34"
-    "@wireapp/store-engine" "0.12.23"
-    bazinga64 "5.3.13"
-    dexie "2.0.4"
-    fs-extra "7.0.0"
-    logdown "3.2.7"
-
-"@wireapp/priority-queue@0.2.22":
-  version "0.2.22"
-  resolved "https://registry.yarnpkg.com/@wireapp/priority-queue/-/priority-queue-0.2.22.tgz#49342294c56d4f4c097a947f202571217c10712a"
-  integrity sha512-JB4VeEbIH4ieUHmaS2ZA8cLm03EzF3I8jRDDz8/NIcZx0L+Tnu03jFgG35F9y51vHed+DIOaG++h+ULgkUA5/Q==
-  dependencies:
-    "@types/node" "10.11.3"
-    pure-uuid "1.5.4"
-
-"@wireapp/proteus@7.3.34":
-  version "7.3.34"
-  resolved "https://registry.yarnpkg.com/@wireapp/proteus/-/proteus-7.3.34.tgz#e7a1ca7fd126b96b5a83edbafd81dc7df6d691b5"
-  integrity sha512-OOZzhHwd/0mNWMONFOHAuFUG3pYDvBzNKoZCXsBCyiPotCADkz/oi66zUEOn31uhTm9aqIcMh3y8bNByJZZIeA==
-  dependencies:
-    "@types/chai" "4.1.6"
-    "@types/ed2curve" "0.2.2"
-    "@types/node" "10.11.3"
-    "@wireapp/cbor" "3.0.88"
-    ed2curve "0.2.1"
-    libsodium-wrappers-sumo "0.7.3"
-
 "@wireapp/protocol-messaging@1.21.6":
   version "1.21.6"
   resolved "https://registry.yarnpkg.com/@wireapp/protocol-messaging/-/protocol-messaging-1.21.6.tgz#f182e075eaf9fd3a334368b4404a05a2ea8ed2c9"
   integrity sha512-iEGKcyMjZD5FTJRBROr+8V9AThrC0mvypywZafro76F/5aql34ZTGs7zFuf0U3G+s5+175kfjNKS1frRrijypw==
   dependencies:
     protobufjs "6.8.8"
-
-"@wireapp/store-engine@0.12.23":
-  version "0.12.23"
-  resolved "https://registry.yarnpkg.com/@wireapp/store-engine/-/store-engine-0.12.23.tgz#1fa0975e74fac66df94f364efaee7ddfc982d716"
-  integrity sha512-NkWt9fH+gKzTKqCSLNrnpYF7Tmn55i2ojmx2H+Y3Bi7bRXQptfQtMaIIvMpKVqGuqteEJIifLn8cMcCvqv7sbg==
-  dependencies:
-    "@types/bro-fs" "0.4.1"
-    "@types/filesystem" "0.0.29"
-    "@types/node" "10.11.3"
-    bro-fs "0.4.0"
-    dexie "2.0.4"
-    fs-extra "7.0.0"
 
 "@xtuc/ieee754@^1.2.0":
   version "1.2.0"
@@ -2375,11 +2277,6 @@ batch@0.6.1:
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/batch/-/batch-0.6.1.tgz#dc34314f4e679318093fc760272525f94bf25c16"
   integrity sha1-3DQxT05nkxgJP8dgJyUl+UvyXBY=
-
-bazinga64@5.3.13:
-  version "5.3.13"
-  resolved "https://registry.yarnpkg.com/bazinga64/-/bazinga64-5.3.13.tgz#19c24808d386b2664db56ff5c45e04ee7561b673"
-  integrity sha512-y+MffA4L5E59Z60DyEas1AzA1lwUQWroDHWQUDWueSc1fj+vWZ5HnqKtluy1piPWn1u28ZInX88NjLFmmMKQZg==
 
 bcrypt-pbkdf@^1.0.0:
   version "1.0.2"
@@ -3178,11 +3075,6 @@ combined-stream@~1.0.6:
   integrity sha512-brWl9y6vOB1xYPZcpZde3N9zDByXTosAeMDo4p1wzo6UMOX4vumB+TP1RZ76sfE6Md68Q0NJSrE/gbezd4Ul+w==
   dependencies:
     delayed-stream "~1.0.0"
-
-commander@2.18.0:
-  version "2.18.0"
-  resolved "https://registry.yarnpkg.com/commander/-/commander-2.18.0.tgz#2bf063ddee7c7891176981a2cc798e5754bc6970"
-  integrity sha512-6CYPa+JP2ftfRU2qkDK+UTVeQYosOg/2GbcjIcKPHfinyOLPVGXu/ovN86RP49Re5ndJK1N0kuiidFFuepc4ZQ==
 
 commander@2.19.0, commander@^2.12.1, commander@^2.14.1, commander@^2.2.0, commander@^2.9.0:
   version "2.19.0"
@@ -4013,11 +3905,6 @@ dot-prop@^4.2.0:
   integrity sha512-tUMXrxlExSW6U2EXiiKGSBVdYgtV8qlHL+C10TsW4PURY/ic+eaysnSkwB4kA/mBlCyy/IKDJ+Lc3wbWeaXtuQ==
   dependencies:
     is-obj "^1.0.0"
-
-dotenv@6.0.0:
-  version "6.0.0"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-6.0.0.tgz#24e37c041741c5f4b25324958ebbc34bca965935"
-  integrity sha512-FlWbnhgjtwD+uNLUGHbMykMOYQaTivdHEmYwAKFjn6GKe/CqY0fNae93ZHTd20snh9ZLr8mTzIL9m0APQ1pjQg==
 
 dotenv@6.1.0:
   version "6.1.0"
@@ -5728,13 +5615,6 @@ html-entities@^1.2.0:
   version "1.2.1"
   resolved "https://registry.yarnpkg.com/html-entities/-/html-entities-1.2.1.tgz#0df29351f0721163515dfb9e5543e5f6eed5162f"
   integrity sha1-DfKTUfByEWNRXfueVUPl9u7VFi8=
-
-html5-websocket@2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/html5-websocket/-/html5-websocket-2.0.3.tgz#d58e01dc4228452781b7863b359d8ce51d328e1c"
-  integrity sha512-/grE6kHJ60yNNCd69f5I0Nz4MJQgpqG9O80i7ZAWg6J9eyfxbOWCoPrlrS1zTItGg0B2om40Z1edSS0V2SGikQ==
-  dependencies:
-    ws "^3.1.0"
 
 html5-websocket@2.0.4:
   version "2.0.4"
@@ -8960,11 +8840,6 @@ punycode@^2.1.0:
   resolved "https://registry.yarnpkg.com/punycode/-/punycode-2.1.1.tgz#b58b010ac40c22c5657616c8d2c2c02c7bf479ec"
   integrity sha512-XRsRjdf+j5ml+y/6GKHPZbrF/8p2Yga0JPtdqTIY2Xe5ohJPD9saDJJLPvp9+NSBprVvevdXZybnj2cv8OEd0A==
 
-pure-uuid@1.5.4:
-  version "1.5.4"
-  resolved "https://registry.yarnpkg.com/pure-uuid/-/pure-uuid-1.5.4.tgz#e762f4950773d81d7a42f8003b948f3510a30925"
-  integrity sha512-aVa7X13aUi0x4afW8F15Rb1Py+elrJrwRvtIeZmYV0khDE2gKBVyU9Yd7fM7RxJlu3biuop2jmBlBzjfF+/x5A==
-
 pure-uuid@1.5.5:
   version "1.5.5"
   resolved "https://registry.yarnpkg.com/pure-uuid/-/pure-uuid-1.5.5.tgz#aad315cebe9e31e612280fe1c9c9f8b48facf664"
@@ -10816,11 +10691,6 @@ typedarray@^0.0.6:
   version "0.0.6"
   resolved "https://registry.yarnpkg.com/typedarray/-/typedarray-0.0.6.tgz#867ac74e3864187b1d3d47d996a78ec5c8830777"
   integrity sha1-hnrHTjhkGHsdPUfZlqeOxciDB3c=
-
-typescript@3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-3.1.1.tgz#3362ba9dd1e482ebb2355b02dfe8bcd19a2c7c96"
-  integrity sha512-Veu0w4dTc/9wlWNf2jeRInNodKlcdLgemvPsrNpfu5Pq39sgfFjvIIgTsvUHCoLBnMhPoUA+tFxsXjU6VexVRQ==
 
 typescript@3.1.2:
   version "3.1.2"
