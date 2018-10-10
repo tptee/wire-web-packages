@@ -51,7 +51,7 @@ class TravisNotificationService {
   public async init(): Promise<void> {
     await this.updateData('Initialization');
 
-    const cronJobTime = '*/1';
+    const cronJobTime = '*/10';
     new CronJob(cronJobTime, () => this.updateData('cron job')).start();
     this.logger.info(`Initialized cron updater job with time: "${cronJobTime}".`);
   }

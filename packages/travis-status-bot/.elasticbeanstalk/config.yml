@@ -1,0 +1,21 @@
+branch-defaults:
+  master:
+    environment: Bots-env
+deploy:
+  artifact: dist/travis-status-bot.zip
+environment-defaults:
+  Bots-env:
+    branch: null
+    repository: null
+global:
+  application_name: Bots
+  default_ec2_keyname: null
+  default_platform: Node.js
+  default_region: eu-central-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  sc: git
+  workspace_type: Application
