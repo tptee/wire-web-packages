@@ -21,7 +21,7 @@ import axios from 'axios';
 import {CronJob} from 'cron';
 import * as logdown from 'logdown';
 
-import {TravisIncident, TravisStatus} from './Interfaces';
+import {TravisDataResult, TravisIncident, TravisStatus} from './Interfaces';
 import {StoreService} from './StoreService';
 
 const defaultDataUrl = 'https://www.traviscistatus.com/index.json';
@@ -30,7 +30,7 @@ class TravisNotificationService {
   private readonly logger: logdown.Logger;
   private readonly DATA_URL: string;
   private readonly storeService: StoreService;
-  private readonly notifySubscribers: ((incidents: TravisIncident[]) => Promise<void>);
+  private readonly notifySubscribers: ((incidents: TravisIncident[], reason?: string) => Promise<void>);
 
   constructor(
     storeService: StoreService,
@@ -52,20 +52,19 @@ class TravisNotificationService {
     await this.updateData('Initialization');
 
     const cronJobTime = '*/1';
-    new CronJob(cronJobTime, () => this.updateData('Cron job')).start();
+    new CronJob(cronJobTime, () => this.updateData('cron job')).start();
     this.logger.info(`Initialized cron updater job with time: "${cronJobTime}".`);
   }
 
   public async getStatus(): Promise<TravisStatus | null> {
-    await this.updateData('Current status was requested');
+    const {cachedData, newData} = await this.updateData('Status request');
 
-    const cachedJSONData = this.storeService.loadDataFromCache();
-
-    if (!cachedJSONData) {
-      this.logger.info('No Travis JSON data found in cache.');
+    if (!newData) {
+      this.logger.info('No new Travis JSON data loaded.');
+      return cachedData;
     }
 
-    return cachedJSONData;
+    return newData;
   }
 
   private getNewIncidents(cachedData: TravisStatus, receivedData: TravisStatus): TravisIncident[] | null {
@@ -85,14 +84,14 @@ class TravisNotificationService {
     return newIncidents.length ? newIncidents : null;
   }
 
-  public async updateData(reason?: string): Promise<TravisStatus | null> {
+  public async updateData(reason?: string): Promise<TravisDataResult> {
     this.logger.info(`Updating Travis JSON data ${reason ? `(reason: ${reason}) ` : ''}...`);
     const jsonData = await this.requestJSONData();
     const cachedData = await this.storeService.loadDataFromCache();
 
     if (!jsonData) {
       this.logger.info(`Did not save any Travis JSON data to cache.`);
-      return cachedData || null;
+      return {newData: null, cachedData: cachedData || null};
     }
 
     await this.storeService.saveDataToCache(jsonData);
@@ -103,13 +102,17 @@ class TravisNotificationService {
       newIncidents = this.getNewIncidents(cachedData, jsonData);
     }
 
-    this.logger.info(`Saved Travis JSON data to cache. ${newIncidents ? newIncidents.length : 'No'} new incidents.`);
+    this.logger.info(
+      `Saved Travis JSON data to cache. ${newIncidents ? newIncidents.length : 'No'} new incident${
+        newIncidents && newIncidents.length === 1 ? '' : 's'
+      }.`
+    );
 
     if (newIncidents) {
-      await this.notifySubscribers(newIncidents);
+      await this.notifySubscribers(newIncidents, 'New incidents found');
     }
 
-    return jsonData;
+    return {newData: jsonData, cachedData};
   }
 
   private async requestJSONData(): Promise<TravisStatus | null> {

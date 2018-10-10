@@ -76,26 +76,28 @@ class MainHandler extends MessageHandler {
     await this.travisNotificationService.init();
   }
 
-  private formatDate(date: string | Date): string {
-    return moment(date).format('DD.MM.YY');
+  private formatDate(date: string | Date, full = false): string {
+    return moment(date).format(full ? 'DD.MM.YY, HH:mm:ss' : 'DD.MM.YY');
   }
 
   private async handleCommandStatus(conversationId: string, messageId: string): Promise<void> {
-    let response = '';
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
+
+    let response = '';
     const status = await this.travisNotificationService.getStatus();
+
     if (!status) {
-      response = 'Could not load the latest Travis status.';
+      response = '❌ Could not load the latest Travis status.';
     } else {
-      let response = 'Here are the 5 latest status entries:\n\n';
       if (status.incidents.length) {
-        response = status.incidents.slice(0, 5).reduce((result, incident) => {
+        response = 'Here are the 5 latest status entries:\n\n';
+        response += status.incidents.slice(0, 5).reduce((result, incident) => {
           const date = incident.created_at ? `${this.formatDate(incident.created_at)}: ` : '';
           const link = incident.shortlink ? ` (${incident.shortlink})` : '';
           return (result += `- ${date}"${incident.name}"${link}\n`);
         }, response);
       } else {
-        response = 'No items found :(';
+        response = 'ℹ️ No incidents found.';
       }
     }
     return this.sendText(conversationId, response);
@@ -109,11 +111,15 @@ class MainHandler extends MessageHandler {
   private async handleCommandSubscribe(conversationId: string, messageId: string): Promise<void> {
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
     try {
+      const isSubscribed = await this.storeService.checkSubscription(conversationId);
+      if (isSubscribed) {
+        return this.sendText(conversationId, 'ℹ️ You are already subscribed. To unsubscribe send "/unsubscribe".');
+      }
       await this.storeService.addSubscriber(conversationId);
-      return this.sendText(conversationId, 'You are successfully subscribed. To unsubscribe send "/unsubscribe".');
+      return this.sendText(conversationId, 'ℹ️ You successfully subscribed. To unsubscribe send "/unsubscribe".');
     } catch (error) {
       this.logger.error(error);
-      return this.sendText(conversationId, 'Sorry, something went wrong :(');
+      return this.sendText(conversationId, 'Sorry, something went wrong ☹️');
     }
   }
 
@@ -122,23 +128,27 @@ class MainHandler extends MessageHandler {
     try {
       const isSubscribed = await this.storeService.checkSubscription(conversationId);
       const answerText = isSubscribed
-        ? 'You are currently subscribed. To unsubscribe send "/unsubscribe"'
-        : 'You are currently unsubscribed. To re-subscribe send "/subscribe".';
+        ? 'ℹ️ You are currently subscribed. To unsubscribe send "/unsubscribe"'
+        : 'ℹ️ You are currently unsubscribed. To re-subscribe send "/subscribe".';
       return this.sendText(conversationId, answerText);
     } catch (error) {
       this.logger.error(error);
-      return this.sendText(conversationId, 'Sorry, something went wrong :(');
+      return this.sendText(conversationId, 'Sorry, something went wrong ☹️');
     }
   }
 
   private async handleCommandUnsubscribe(conversationId: string, messageId: string): Promise<void> {
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
     try {
+      const isSubscribed = await this.storeService.checkSubscription(conversationId);
+      if (isSubscribed) {
+        return this.sendText(conversationId, 'ℹ️ You not subscribed yet. To subscribe send "/subscribe".');
+      }
       await this.storeService.removeSubscriber(conversationId);
-      return this.sendText(conversationId, 'You are successfully unsubscribed. To re-subscribe send "/subscribe".');
+      return this.sendText(conversationId, 'ℹ️ You successfully unsubscribed. To re-subscribe send "/subscribe".');
     } catch (error) {
       this.logger.error(error);
-      return this.sendText(conversationId, 'Sorry, something went wrong :(');
+      return this.sendText(conversationId, 'Sorry, something went wrong ☹️');
     }
   }
 
@@ -146,11 +156,14 @@ class MainHandler extends MessageHandler {
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
 
     try {
-      await this.travisNotificationService.updateData();
-      return this.sendText(conversationId, 'Successfully updated the Travis JSON data.');
+      const {newData} = await this.travisNotificationService.updateData('Update request');
+      const answer = newData
+        ? '👍 Successfully updated the Travis JSON data.'
+        : '❌ Failed to update the Travis JSON data.';
+      return this.sendText(conversationId, answer);
     } catch (error) {
       this.logger.error(error);
-      return this.sendText(conversationId, 'Sorry, something went wrong :(');
+      return this.sendText(conversationId, 'Sorry, something went wrong ☹️');
     }
   }
 
@@ -195,12 +208,12 @@ class MainHandler extends MessageHandler {
         try {
           const notifiedIds = await this.sendToSubscribers('Test notification');
           const answer = notifiedIds.length
-            ? `Successfully notified ${notifiedIds.length} subscriber${notifiedIds.length === 1 ? '' : 's'}.`
+            ? `👍 Successfully notified ${notifiedIds.length} subscriber${notifiedIds.length === 1 ? '' : 's'}.`
             : 'Currently nobody is subscribed.';
           return this.sendText(conversationId, answer);
         } catch (error) {
           this.logger.error(error);
-          return this.sendText(conversationId, 'Sorry, something went wrong :(');
+          return this.sendText(conversationId, 'Sorry, something went wrong ☹️');
         }
       }
       default: {
@@ -210,22 +223,25 @@ class MainHandler extends MessageHandler {
     }
   }
 
-  private async notifySubscribers(incidents: TravisIncident[]): Promise<void> {
+  private async notifySubscribers(incidents: TravisIncident[], reason?: string): Promise<void> {
     for (const id in incidents) {
       const incident = incidents[id];
+      const impactText = incident.impact && incident.impact !== 'none' ? ` (${incident.impact} impact)` : '';
+      const updateText = incident.incident_updates.reduce((message, update) => {
+        const date = this.formatDate(update.updated_at, true);
+        const updateBody = update.body.substr(0, 50);
+        const dots = update.body.length > 50 ? '...' : '';
+        return `${message}* ${date}: ${updateBody}${dots}\n`;
+      }, '');
 
-      /* tslint:disable:prefer-template */
-      const message =
-        '⚠️ **Travis incident report**\n\n' +
-        `**${incident.name}** (${incident.impact} impact)\n` +
-        incident.incident_updates.reduce((message, update) => message + update.body.substr(0, 10) + '...', '') +
-        `\n\nMore info: ${incident.shortlink}`;
-      /* tslint:enable:prefer-template */
+      const message = `⚠️ **Travis incident report** ️️⚠️\n\n**${
+        incident.name
+      }**${impactText}\n${updateText}\nMore info: ${incident.shortlink}`;
 
       this.logger.info(
-        `Notifying subscribers about incident with ID "${incident.id}" (${parseInt(id, 10) + 1}/${
-          incidents.length
-        }) ...`
+        `Notifying subscribers about incident with ID "${incident.id}" (${parseInt(id, 10) + 1}/${incidents.length}) ${
+          reason ? `(reason: ${reason}) ` : ''
+        }...`
       );
       const notifiedIds = await this.sendToSubscribers(message);
       if (!notifiedIds.length) {

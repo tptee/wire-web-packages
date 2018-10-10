@@ -90,6 +90,11 @@ interface TravisIncident {
   updated_at: string;
 }
 
+interface TravisDataResult {
+  cachedData: TravisStatus | null;
+  newData: TravisStatus | null;
+}
+
 interface TravisStatus {
   components: TravisComponent[];
   incidents: TravisIncident[];
@@ -104,4 +109,4 @@ interface TravisStatus {
   };
 }
 
-export {Options, SubscriberOptions, TravisIncident, TravisStatus};
+export {Options, SubscriberOptions, TravisDataResult, TravisIncident, TravisStatus};
