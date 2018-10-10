@@ -49,15 +49,15 @@ class TravisNotificationService {
   }
 
   public async init(): Promise<void> {
-    await this.updateData();
+    await this.updateData('Initialization');
 
     const cronJobTime = '*/1';
-    new CronJob(cronJobTime, () => this.updateData()).start();
+    new CronJob(cronJobTime, () => this.updateData('Cron job')).start();
     this.logger.info(`Initialized cron updater job with time: "${cronJobTime}".`);
   }
 
   public async getStatus(): Promise<TravisStatus | null> {
-    await this.updateData();
+    await this.updateData('Current status was requested');
 
     const cachedJSONData = this.storeService.loadDataFromCache();
 
@@ -68,29 +68,25 @@ class TravisNotificationService {
     return cachedJSONData;
   }
 
-  private async getNewIncidents(oldData: TravisStatus, newData: TravisStatus): Promise<TravisIncident[] | null> {
-    if (!newData.incidents || !newData.incidents.length) {
-      this.logger.info('!newData.incidents || !newData.incidents.length');
+  private getNewIncidents(cachedData: TravisStatus, receivedData: TravisStatus): TravisIncident[] | null {
+    const cachedIncidents = cachedData.incidents;
+    const receivedIncidents = receivedData.incidents;
+
+    if (!receivedIncidents || !receivedIncidents.length) {
       return null;
     }
 
-    if (!oldData.incidents || !oldData.incidents.length) {
-      return newData.incidents;
-    }
-
-    const cachedIncidents = oldData.incidents;
-
     if (!cachedIncidents || !cachedIncidents.length) {
-      return newData.incidents;
+      return receivedIncidents;
     }
 
-    const newIncidents = newData.incidents.filter(dataIncident =>
-      cachedIncidents.some(cachedIncident => cachedIncident.id === dataIncident.id)
-    );
+    const cachedIncidentIds = cachedData.incidents.map(incident => incident.id);
+    const newIncidents = receivedIncidents.filter(receivedIncident => !cachedIncidentIds.includes(receivedIncident.id));
     return newIncidents.length ? newIncidents : null;
   }
 
-  public async updateData(): Promise<TravisStatus | null> {
+  public async updateData(reason?: string): Promise<TravisStatus | null> {
+    this.logger.info(`Updating Travis JSON data ${reason ? `(reason: ${reason}) ` : ''}...`);
     const jsonData = await this.requestJSONData();
     const cachedData = await this.storeService.loadDataFromCache();
 
@@ -104,12 +100,10 @@ class TravisNotificationService {
     let newIncidents: TravisIncident[] | null = null;
 
     if (cachedData) {
-      newIncidents = await this.getNewIncidents(cachedData, jsonData);
+      newIncidents = this.getNewIncidents(cachedData, jsonData);
     }
 
-    this.logger.info(
-      `Saved Travis JSON data to cache. Got ${newIncidents ? newIncidents.length : 'no'} new incidents.`
-    );
+    this.logger.info(`Saved Travis JSON data to cache. ${newIncidents ? newIncidents.length : 'No'} new incidents.`);
 
     if (newIncidents) {
       await this.notifySubscribers(newIncidents);
@@ -122,7 +116,7 @@ class TravisNotificationService {
     try {
       const {data} = await axios.get<TravisStatus>(this.DATA_URL);
       this.logger.info(
-        `Received ${data.incidents.length} incidents and ${data.components.length} components from ${this.DATA_URL}.`
+        `Received ${data.incidents.length} incidents and ${data.components.length} components from "${this.DATA_URL}".`
       );
       return data;
     } catch (error) {

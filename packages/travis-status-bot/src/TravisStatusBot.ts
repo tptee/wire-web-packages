@@ -211,7 +211,9 @@ class MainHandler extends MessageHandler {
   }
 
   private async notifySubscribers(incidents: TravisIncident[]): Promise<void> {
-    for (const incident of incidents) {
+    for (const id in incidents) {
+      const incident = incidents[id];
+
       /* tslint:disable:prefer-template */
       const message =
         '⚠️ **Travis incident report**\n\n' +
@@ -219,8 +221,16 @@ class MainHandler extends MessageHandler {
         incident.incident_updates.reduce((message, update) => message + update.body.substr(0, 10) + '...', '') +
         `\n\nMore info: ${incident.shortlink}`;
       /* tslint:enable:prefer-template */
-      this.logger.info(`Notifying subscribers about ${incident.id} ...`);
-      await this.sendToSubscribers(message);
+
+      this.logger.info(
+        `Notifying subscribers about incident with ID "${incident.id}" (${parseInt(id, 10) + 1}/${
+          incidents.length
+        }) ...`
+      );
+      const notifiedIds = await this.sendToSubscribers(message);
+      if (!notifiedIds.length) {
+        break;
+      }
     }
   }
 

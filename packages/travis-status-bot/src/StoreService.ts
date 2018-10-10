@@ -86,18 +86,18 @@ class StoreService {
     if (subscriberIds.length) {
       this.logger.info(`Loaded ${subscriberIds.length} subscriber${subscriberIds.length === 1 ? '' : 's'} from cache.`);
     } else {
-      this.logger.info(`No subscribers loaded from cache.`);
+      this.logger.info(`No subscribers found in cache.`);
     }
 
     const jsonData = await this.loadDataFromCache();
     if (jsonData && jsonData.incidents && jsonData.incidents.length) {
       this.logger.info(
-        `Loaded JSON data with ${jsonData.incidents.length} incident${
+        `Loaded Travis JSON data with ${jsonData.incidents.length} incident${
           jsonData.incidents.length === 1 ? '' : 's'
         } from cache.`
       );
     } else {
-      this.logger.info(`No JSON data found in cache.`);
+      this.logger.info(`No Travis JSON data found in cache.`);
     }
   }
 
