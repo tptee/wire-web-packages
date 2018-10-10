@@ -41,20 +41,32 @@ program
   .option('-e, --email <email>', 'Your email address')
   .option('-m, --message <message>', 'Custom message')
   .option('-p, --password <password>', 'Your password')
-  .option('-f, --feed <URL>', 'Custom Travis JSON file')
+  .option('-f, --file <URL>', 'Custom Travis JSON file')
   .option('-s, --store <path>', 'Custom store engine file path')
   .parse(process.argv);
 
-const bot = new Bot({
-  email: program.email || process.env.WIRE_EMAIL,
-  password: program.password || process.env.WIRE_PASSWORD,
-});
+const email = program.email || process.env.WIRE_EMAIL;
+const password = program.password || process.env.WIRE_PASSWORD;
 
-const customFeedURL: string | undefined = program.feed || process.env.TRAVIS_FEED_URL;
-const customStorePath: string | undefined = program.feed || process.env.STORE_PATH;
+if (!password) {
+  console.error('Error: No password given. Run with -p or set `WIRE_PASSWORD`.');
+  program.outputHelp();
+  process.exit(1);
+}
+
+if (!email) {
+  console.error('Error: No email given. Run with -e or set `WIRE_EMAIL`.');
+  program.outputHelp();
+  process.exit(1);
+}
+
+const bot = new Bot({email, password});
+
+const customDataURL: string | undefined = program.file || process.env.TRAVIS_DATA_URL;
+const customStorePath: string | undefined = program.store || process.env.STORE_PATH;
 
 const mainHandler = new MainHandler({
-  ...(customFeedURL && {feedUrl: customFeedURL}),
+  ...(customDataURL && {dataUrl: customDataURL}),
   ...(customStorePath && {storePath: customStorePath}),
 });
 

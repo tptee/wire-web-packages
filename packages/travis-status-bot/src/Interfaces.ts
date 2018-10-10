@@ -18,7 +18,7 @@
  */
 
 interface Options {
-  feedUrl?: string;
+  dataUrl?: string;
   storePath?: string;
 }
 

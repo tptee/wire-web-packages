@@ -17,7 +17,7 @@
  *
  */
 
-export * from './interfaces';
+export * from './Interfaces';
 export * from './StoreService';
-export * from './TravisFeedService';
+export * from './TravisNotificationService';
 export * from './TravisStatusBot';

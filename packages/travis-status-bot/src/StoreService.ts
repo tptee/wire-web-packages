@@ -22,14 +22,14 @@ import {FileEngine} from '@wireapp/store-engine/dist/commonjs/engine';
 import * as logdown from 'logdown';
 import * as path from 'path';
 
-import {SubscriberOptions, TravisStatus} from './interfaces';
+import {SubscriberOptions, TravisStatus} from './Interfaces';
 
 const defaultStorePath = path.join(__dirname, '.temp');
 
 class StoreService {
   private readonly STORE_PATH: string;
   private readonly TABLE_NAME_SUBSCRIBERS = 'subscribers';
-  private readonly TABLE_NAME_FEED = 'travis-feed';
+  private readonly TABLE_NAME_Data = 'travis-data';
   private readonly logger: logdown.Logger;
   private readonly storeEngine: FileEngine;
 
@@ -44,17 +44,17 @@ class StoreService {
     this.logger.state.isEnabled = true;
   }
 
-  public async saveFeedToCache(feed: TravisStatus): Promise<void> {
+  public async saveDataToCache(data: TravisStatus): Promise<void> {
     try {
-      await this.storeEngine.updateOrCreate(this.TABLE_NAME_FEED, 'full', feed);
+      await this.storeEngine.updateOrCreate(this.TABLE_NAME_Data, 'full', data);
     } catch (error) {
       this.logger.error(error);
     }
   }
 
-  public async loadFeedFromCache(): Promise<TravisStatus | null> {
+  public async loadDataFromCache(): Promise<TravisStatus | null> {
     try {
-      const data = await this.storeEngine.read<TravisStatus>(this.TABLE_NAME_FEED, 'full');
+      const data = await this.storeEngine.read<TravisStatus>(this.TABLE_NAME_Data, 'full');
       return data;
     } catch (error) {
       const recordNotFound =
@@ -89,15 +89,15 @@ class StoreService {
       this.logger.info(`No subscribers loaded from cache.`);
     }
 
-    const feedData = await this.loadFeedFromCache();
-    if (feedData && feedData.incidents && feedData.incidents.length) {
+    const jsonData = await this.loadDataFromCache();
+    if (jsonData && jsonData.incidents && jsonData.incidents.length) {
       this.logger.info(
-        `Loaded feed data with ${feedData.incidents.length} incident${
-          feedData.incidents.length === 1 ? '' : 's'
+        `Loaded JSON data with ${jsonData.incidents.length} incident${
+          jsonData.incidents.length === 1 ? '' : 's'
         } from cache.`
       );
     } else {
-      this.logger.info(`No feed data loaded from cache.`);
+      this.logger.info(`No JSON data found in cache.`);
     }
   }
 

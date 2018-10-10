@@ -24,25 +24,25 @@ import {PayloadBundleIncoming, PayloadBundleType, ReactionType} from '@wireapp/c
 import * as logdown from 'logdown';
 import * as moment from 'moment';
 
-import {Options, TravisIncident} from './interfaces';
+import {Options, TravisIncident} from './Interfaces';
 import {StoreService} from './StoreService';
-import {TravisFeedService} from './TravisFeedService';
+import {TravisNotificationService} from './TravisNotificationService';
 
 const {version}: {version: string} = require('../package.json');
 
 class MainHandler extends MessageHandler {
-  private readonly helpText = `**Hello!** 😎 This is Travis Status Bot v${version} speaking.\n\nAvailable commands:\n- /feed \n- /help\n- /subscribe\n- /subscribed\n- /unsubscribe`;
+  private readonly helpText = `**Hello!** 😎 This is Travis Status Bot v${version} speaking.\n\nAvailable commands:\n- /status \n- /help\n- /subscribe\n- /subscribed\n- /unsubscribe`;
   private readonly logger: logdown.Logger;
-  private readonly travisFeedService: TravisFeedService;
   private readonly storeService: StoreService;
+  private readonly travisNotificationService: TravisNotificationService;
 
   constructor(options?: Options) {
     super();
     this.storeService = new StoreService(options && options.storePath);
-    this.travisFeedService = new TravisFeedService(
+    this.travisNotificationService = new TravisNotificationService(
       this.storeService,
       this.notifySubscribers.bind(this),
-      options && options.feedUrl
+      options && options.dataUrl
     );
     this.logger = logdown('@wireapp/travis-status-bot/MainHandler', {
       logger: console,
@@ -73,23 +73,23 @@ class MainHandler extends MessageHandler {
   public async init(): Promise<void> {
     this.logger.info('Initializing MainHandler');
     await this.storeService.init();
-    await this.travisFeedService.init();
+    await this.travisNotificationService.init();
   }
 
   private formatDate(date: string | Date): string {
     return moment(date).format('DD.MM.YY');
   }
 
-  private async handleCommandFeed(conversationId: string, messageId: string): Promise<void> {
+  private async handleCommandStatus(conversationId: string, messageId: string): Promise<void> {
     let response = '';
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
-    const feed = await this.travisFeedService.getFeed();
-    if (!feed) {
-      response = 'Could not load the latest Travis feed.';
+    const status = await this.travisNotificationService.getStatus();
+    if (!status) {
+      response = 'Could not load the latest Travis status.';
     } else {
-      let response = 'Here are the 5 latest feed entries:\n\n';
-      if (feed.incidents.length) {
-        response = feed.incidents.slice(0, 5).reduce((result, incident) => {
+      let response = 'Here are the 5 latest status entries:\n\n';
+      if (status.incidents.length) {
+        response = status.incidents.slice(0, 5).reduce((result, incident) => {
           const date = incident.created_at ? `${this.formatDate(incident.created_at)}: ` : '';
           const link = incident.shortlink ? ` (${incident.shortlink})` : '';
           return (result += `- ${date}"${incident.name}"${link}\n`);
@@ -146,8 +146,8 @@ class MainHandler extends MessageHandler {
     await this.sendReaction(conversationId, messageId, ReactionType.LIKE);
 
     try {
-      await this.travisFeedService.updateFeed();
-      return this.sendText(conversationId, 'Successfully updated the Travis feed.');
+      await this.travisNotificationService.updateData();
+      return this.sendText(conversationId, 'Successfully updated the Travis JSON data.');
     } catch (error) {
       this.logger.error(error);
       return this.sendText(conversationId, 'Sorry, something went wrong :(');
@@ -165,9 +165,9 @@ class MainHandler extends MessageHandler {
     }
 
     switch (rawText) {
-      case '/feed': {
+      case '/status': {
         this.logger.info(`Received command "${rawText}" from "${senderId}".`);
-        return this.handleCommandFeed(conversationId, messageId);
+        return this.handleCommandStatus(conversationId, messageId);
       }
       case '/help': {
         this.logger.info(`Received command "${rawText}" from "${senderId}".`);
